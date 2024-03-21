@@ -6,24 +6,26 @@ using UnityEngine.SceneManagement;
 public class SceneTransition : MonoBehaviour
 {
 
-    [Header("�V�[���J�ڃI�u�W�F�N�g")] public SceneTransitionObject[] sceneTransitionObjects;
-    [Header("�A�j���[�V�����t�F�[�Y")] public TransitionPhase transitionPhase = TransitionPhase.In;
-    [Header("�A�j���[�V�����^�C�v")] public TransitionType transitionType = TransitionType.Bar_Slide;
+    [Header("シーン遷移オブジェクト")] public SceneTransitionObject[] sceneTransitionObjects;
+    [Header("アニメーションフェーズ")] public TransitionPhase transitionPhase = TransitionPhase.In;
+    [Header("アニメーションタイプ")] public TransitionType transitionType = TransitionType.Bar_Slide;
 
     // Bar_Slide, Bar_Flip, Tile_Slide
-    [HideInInspector] [Header("�т̃A�j���[�V�����Ԋu")] public float sceneTransitionStartInterval;
-    [HideInInspector] [Header("�т̃A�j���[�V��������")] public float sceneTransitionSpeed;
+    [HideInInspector] [Header("オブジェクトの移動開始間隔")] public float sceneTransitionStartInterval;
+    [HideInInspector] [Header("オブジェクトの移動時間")] public float sceneTransitionSpeed;
 
     // Tile_Rotate
-    [HideInInspector] [Header("")] public float sceneTransitionRadian;
+    [HideInInspector] [Header("回転角")] public float sceneTransitionRadian;
 
     // Sprite
-    [HideInInspector] [Header("�J�ڗp�X�v���C�g")] public Sprite sceneTransitionSprite;
-    [HideInInspector] [Header("�X�v���C�g�J���[")] public Color sceneTransitionSpriteColor;
-    [HideInInspector] [Header("�X�v���C�g�̍ő�X�P�[��")] public Vector3 sceneTransitionMaxScale;
-    [HideInInspector] [Header("�X�v���C�g�̊g�厞��")] public float sceneTransitionSpriteSpeed;
+    [HideInInspector] [Header("マスクするスプライト")] public Sprite sceneTransitionSprite;
+    [HideInInspector] [Header("マスクカラー")] public Color sceneTransitionSpriteColor;
+    [HideInInspector] [Header("マスクオブジェクトの最大サイズ")] public Vector3 sceneTransitionMaxScale;
+    [HideInInspector] [Header("スプライトの拡大速度")] public float sceneTransitionSpriteSpeed;
+    [HideInInspector] public GameObject square;
+    [HideInInspector] public SpriteMask mask;
 
-    [Header("�V�[���J�ڂ܂ł̎���")] public float timeUpToSceneTransition;
+    [Header("シーン遷移までの時間")] public float timeUpToSceneTransition;
 
     private string transitionSceneName;
     private bool sceneTransitionFlag = false;
@@ -55,6 +57,7 @@ public class SceneTransition : MonoBehaviour
         if (transitionPhase == TransitionPhase.Out)
         {
             sceneTransitionFlag = true;
+            DOTween.KillAll();
         }
 
         foreach (Transform child in transform)
@@ -72,6 +75,7 @@ public class SceneTransition : MonoBehaviour
     {
         if (sceneTransitionFlag)
         {
+            
             switch (transitionType) {
                 case TransitionType.Bar_Slide:
                     sceneTransitionTime += Time.deltaTime;
@@ -100,29 +104,6 @@ public class SceneTransition : MonoBehaviour
                             lastStartedTransitionObjectIndex++;
                         }
                     }
-                    if (timeUpToSceneTransition < sceneTransitionTime) {
-                        if (transitionPhase == TransitionPhase.In) {
-                            SceneManager.LoadScene(transitionSceneName);
-                        }
-                        else if (transitionPhase == TransitionPhase.Out) {
-                            sceneTransitionImages.SetActive(false);
-                            sceneTransitionFlag = false;
-                        }
-                    }
-                    break;
-
-                case TransitionType.Sprite:
-                    if (sceneTransitionTime == 0) {
-                        sceneTransitionObjects[0].transitionObject.transform.DOScale(sceneTransitionMaxScale, sceneTransitionSpriteSpeed);
-                        foreach (Transform child in transform) {
-                            if (child.gameObject.name == "Square") {
-                                child.gameObject.GetComponent<SpriteRenderer>().color = sceneTransitionSpriteColor;
-                            }
-                        }
-
-                    }
-                    sceneTransitionTime += Time.deltaTime;
-
                     if (timeUpToSceneTransition < sceneTransitionTime) {
                         if (transitionPhase == TransitionPhase.In) {
                             SceneManager.LoadScene(transitionSceneName);
@@ -204,7 +185,45 @@ public class SceneTransition : MonoBehaviour
                         }
                     }
                     break;
+
+                case TransitionType.Sprite:
+                    if (sceneTransitionTime == 0)
+                    {
+                        sceneTransitionObjects[0].transitionObject.transform.DOScale(sceneTransitionMaxScale, sceneTransitionSpriteSpeed);
+                        square.GetComponent<SpriteRenderer>().color = sceneTransitionSpriteColor;
+                        mask.sprite = sceneTransitionSprite;
+                    }
+                    sceneTransitionTime += Time.deltaTime;
+
+                    if (timeUpToSceneTransition < sceneTransitionTime)
+                    {
+                        if (transitionPhase == TransitionPhase.In)
+                        {
+                            SceneManager.LoadScene(transitionSceneName);
+                        }
+                        else if (transitionPhase == TransitionPhase.Out)
+                        {
+                            sceneTransitionImages.SetActive(false);
+                            sceneTransitionFlag = false;
+                        }
+                    }
+                    break;
             }
+        }
+    }
+
+    private void ChangeColorInChildren(Transform current)
+    {
+        // 現在のオブジェクトのSpriteRendererコンポーネントがあれば色を変更する
+        if (current.GetComponent<SpriteRenderer>() != null)
+        {
+            current.GetComponent<SpriteRenderer>().color = sceneTransitionSpriteColor;
+        }
+
+        // 子オブジェクトがあれば再帰的に処理を行う
+        foreach (Transform child in current)
+        {
+            ChangeColorInChildren(child);
         }
     }
 
@@ -215,5 +234,6 @@ public class SceneTransition : MonoBehaviour
     {
         transitionSceneName = sceneName;
         sceneTransitionFlag = true;
+        DOTween.KillAll();
     }
 }
