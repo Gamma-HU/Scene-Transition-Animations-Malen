@@ -2,6 +2,8 @@
 使用の際はこれとは別に DOTween (HOTween v2) パッケージが必要です。<br>
 また、Full HD (1920 x 1080) の画面比率を想定しているのでそれ以外の比率では正常に機能しない場合があります。
 
+https://github.com/Gamma-HU/Scene-Transition-Animations-Malen/assets/87284890/e5a8a011-e65f-4668-b858-632d6ba72492
+
 <h3>[使い方]</h3>
 <ol>
   <li>
